@@ -182,7 +182,7 @@ struct term_data
 };
 
 /* Max number of windows on screen */
-#define MAX_TERM_DATA 4
+#define MAX_TERM_DATA 7
 
 /* Information about our windows */
 static term_data data[MAX_TERM_DATA];
@@ -361,15 +361,15 @@ static void keymap_game_prepare(void)
     game_termio.c_cc[VEOL] = (char)-1;
 
 #if 0
-	/* Disable the non-posix control characters */
-	game_termio.c_cc[VEOL2] = (char)-1;
-	game_termio.c_cc[VSWTCH] = (char)-1;
-	game_termio.c_cc[VDSUSP] = (char)-1;
-	game_termio.c_cc[VREPRINT] = (char)-1;
-	game_termio.c_cc[VDISCARD] = (char)-1;
-	game_termio.c_cc[VWERASE] = (char)-1;
-	game_termio.c_cc[VLNEXT] = (char)-1;
-	game_termio.c_cc[VSTATUS] = (char)-1;
+    /* Disable the non-posix control characters */
+    game_termio.c_cc[VEOL2] = (char)-1;
+    game_termio.c_cc[VSWTCH] = (char)-1;
+    game_termio.c_cc[VDSUSP] = (char)-1;
+    game_termio.c_cc[VREPRINT] = (char)-1;
+    game_termio.c_cc[VDISCARD] = (char)-1;
+    game_termio.c_cc[VWERASE] = (char)-1;
+    game_termio.c_cc[VLNEXT] = (char)-1;
+    game_termio.c_cc[VSTATUS] = (char)-1;
 #endif
 
     /* Normally, block until a character is read */
@@ -1070,6 +1070,7 @@ errr init_gcu(int argc, char** argv)
     /* Extract the game keymap */
     keymap_game_prepare();
 
+
     /*** Now prepare the term(s) ***/
 
     /* Big screen -- one big term */
@@ -1092,8 +1093,7 @@ errr init_gcu(int argc, char** argv)
          * of the sort of things that go in the windows.
          *
          * This patch is by 'bron' from the Angband Forum
-         * under the directions: 'Feel free to use this (or not) as you see
-         * fit.'
+         * under the directions: 'Feel free to use this (or not) as you see fit.'
          */
 
         /* Minimum size for UpperLeft window */
@@ -1104,7 +1104,7 @@ errr init_gcu(int argc, char** argv)
         const int ur_max_cols = 80;
 
         /* Maximum (useful) rows for LowerLeft window */
-        const int ll_max_rows = 26;
+        const int ll_max_rows = 10;
 
         /* Actual size of UpperLeft window */
         int ul_rows = MAX(ul_min_rows, LINES - (ll_max_rows + 1));
@@ -1118,56 +1118,69 @@ errr init_gcu(int argc, char** argv)
             /* Decide on size and position */
             switch (i)
             {
-            /* Upper left */
-            case 0:
-            {
-                rows = ul_rows;
-                cols = ul_cols;
-                y = x = 0;
-                break;
-            }
+                /* Upper left */
+                case 0:
+                {
+                    rows = ul_rows;
+                    cols = ul_cols;
+                    y = x = 0;
+                    break;
+                }
 
-            /* Lower left */
-            case 1:
-            {
-                rows = LINES - (ul_rows + 1);
-                cols = ul_cols;
-                y = ul_rows + 1;
-                x = 0;
-                break;
-            }
+                /* Upper right - Inventory */
+                case 1:
+                {
+                    rows = 26;
+                    cols = COLS - (ul_cols + 1);
+                    y = 0;
+                    x = ul_cols + 1;
+                    break;
+                }
 
-            /* Upper right */
-            case 2:
-            {
-                rows = ul_rows;
-                cols = COLS - (ul_cols + 1);
-                y = 0;
-                x = ul_cols + 1;
-                break;
-            }
+                /* Mid right - Equipment */
+                case 2:
+                {
+                    rows = 17;
+                    cols = COLS - (ul_cols + 1);
+                    y = 26;
+                    x = ul_cols + 1;
+                    break;
+                }
 
-            /* Lower right */
-            case 3:
-            {
-                rows = LINES - (ul_rows + 1);
-                cols = COLS - (ul_cols + 1);
-                y = ul_rows + 1;
-                x = ul_cols + 1;
-                break;
-            }
+                /* Lower right - Rolls */
+                case 3:
+                {
+                    rows = LINES - (45 + 1);
+                    cols = COLS - (ul_cols + 1);
+                    y = 43;
+                    x = ul_cols + 1;
+                    break;
+                }
 
-            /* XXX */
-            default:
-            {
-                rows = cols = y = x = 0;
-                break;
-            }
+                /* Lower left - Messages */
+                case 6:
+                {
+                    rows = LINES - (ul_rows + 1);
+                    cols = ul_cols;
+                    y = ul_rows + 1;
+                    x = 0;
+                    break;
+                }
+
+                /* XXX */
+                default:
+                {
+                    rows = cols = y = x = 0;
+                    break;
+                }
             }
 
             /* Skip non-existant windows */
             if (rows <= 0 || cols <= 0)
+            {
+                next_win++;
                 continue;
+            }
 
             /* Create a term */
             term_data_init_gcu(&data[next_win], rows, cols, y, x);
@@ -1189,5 +1202,6 @@ errr init_gcu(int argc, char** argv)
     /* Success */
     return (0);
 }
+
 
 #endif /* USE_GCU */
